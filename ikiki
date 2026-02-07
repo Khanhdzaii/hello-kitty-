@@ -1,0 +1,281 @@
+--// KittyUI Orion-Style Refined
+--// Hello Kitty Glass | Mobile + PC | Orion-like API
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+pcall(function()
+	PlayerGui:FindFirstChild("KittyUI"):Destroy()
+end)
+
+-- ScreenGui
+local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+ScreenGui.Name = "KittyUI"
+ScreenGui.ResetOnSpawn = false
+
+-- Main
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.fromOffset(560, 390)
+Main.Position = UDim2.fromScale(0.5, 0.5)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundTransparency = 0.18
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 22)
+
+-- Color cycle (Orion-soft, pink-white)
+task.spawn(function()
+	local t = 0
+	while Main.Parent do
+		t += RunService.RenderStepped:Wait()
+		local a = (math.sin(t * 2) + 1) / 2
+		Main.BackgroundColor3 = Color3.new(1, 0.82 + 0.18 * a, 0.88 + 0.12 * a)
+	end
+end)
+
+-- Title
+local Title = Instance.new("Frame", Main)
+Title.Size = UDim2.new(1, 0, 0, 44)
+Title.BackgroundTransparency = 1
+
+local TitleText = Instance.new("TextLabel", Title)
+TitleText.Size = UDim2.new(1, -100, 1, 0)
+TitleText.Position = UDim2.fromOffset(16, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "😻 KittyUI"
+TitleText.Font = Enum.Font.GothamSemibold
+TitleText.TextSize = 17
+TitleText.TextXAlignment = Left
+TitleText.TextColor3 = Color3.new(1,1,1)
+
+local MinBtn = Instance.new("TextButton", Title)
+MinBtn.Size = UDim2.fromOffset(30,30)
+MinBtn.Position = UDim2.new(1,-36,0.5,-15)
+MinBtn.Text = "-"
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 20
+MinBtn.TextColor3 = Color3.new(1,1,1)
+MinBtn.BackgroundTransparency = 0.35
+MinBtn.BorderSizePixel = 0
+Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(1,0)
+
+-- Body
+local Body = Instance.new("Frame", Main)
+Body.Position = UDim2.fromOffset(0,44)
+Body.Size = UDim2.new(1,0,1,-44)
+Body.BackgroundTransparency = 1
+
+-- Tabs (Orion spacing)
+local Tabs = Instance.new("Frame", Body)
+Tabs.Size = UDim2.new(0,130,1,0)
+Tabs.BackgroundTransparency = 1
+Tabs.Padding = UDim.new(0,6)
+
+local TabLayout = Instance.new("UIListLayout", Tabs)
+TabLayout.Padding = UDim.new(0,6)
+
+-- Pages
+local Pages = Instance.new("Frame", Body)
+Pages.Position = UDim2.fromOffset(130,0)
+Pages.Size = UDim2.new(1,-130,1,0)
+Pages.BackgroundTransparency = 1
+
+-- Drag (PC + Mobile)
+do
+	local dragging, startPos, dragStart
+	Title.InputBegan:Connect(function(i)
+		if i.UserInputType == Enum.UserInputType.MouseButton1
+		or i.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = i.Position
+			startPos = Main.Position
+		end
+	end)
+	UIS.InputChanged:Connect(function(i)
+		if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement
+		or i.UserInputType == Enum.UserInputType.Touch) then
+			local d = i.Position - dragStart
+			Main.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + d.X,
+				startPos.Y.Scale, startPos.Y.Offset + d.Y
+			)
+		end
+	end)
+	UIS.InputEnded:Connect(function()
+		dragging = false
+	end)
+end
+
+-- Minimize
+local OPEN = true
+local FULL = Main.Size
+MinBtn.MouseButton1Click:Connect(function()
+	OPEN = not OPEN
+	if OPEN then
+		MinBtn.Text = "-"
+		TweenService:Create(Main,TweenInfo.new(0.25,Enum.EasingStyle.Quad),{Size = FULL}):Play()
+	else
+		MinBtn.Text = "+"
+		TweenService:Create(Main,TweenInfo.new(0.25,Enum.EasingStyle.Quad),{Size = UDim2.fromOffset(560,44)}):Play()
+	end
+end)
+
+-- ================= LIB =================
+local Library = {}
+local CurrentPage
+local CurrentDropdown
+local CurrentTabBtn
+
+function Library:MakeWindow()
+	return Library
+end
+
+function Library:MakeTab(info)
+	-- Tab button
+	local TabBtn = Instance.new("TextButton", Tabs)
+	TabBtn.Size = UDim2.new(1,-12,0,36)
+	TabBtn.Text = "  😻  "..info.Name
+	TabBtn.Font = Enum.Font.Gotham
+	TabBtn.TextSize = 14
+	TabBtn.TextXAlignment = Left
+	TabBtn.TextColor3 = Color3.new(1,1,1)
+	TabBtn.BackgroundTransparency = 0.6
+	TabBtn.BorderSizePixel = 0
+	Instance.new("UICorner", TabBtn)
+
+	-- Page
+	local Page = Instance.new("Frame", Pages)
+	Page.Size = UDim2.new(1,0,1,0)
+	Page.Visible = false
+	Page.BackgroundTransparency = 1
+
+	local Layout = Instance.new("UIListLayout", Page)
+	Layout.Padding = UDim.new(0,10)
+
+	-- Tab switching (Orion-like highlight)
+	local function Select()
+		if CurrentPage then CurrentPage.Visible = false end
+		if CurrentTabBtn then
+			TweenService:Create(CurrentTabBtn,TweenInfo.new(0.2),{BackgroundTransparency = 0.6}):Play()
+		end
+		Page.Visible = true
+		CurrentPage = Page
+		CurrentTabBtn = TabBtn
+		TweenService:Create(TabBtn,TweenInfo.new(0.2),{BackgroundTransparency = 0.25}):Play()
+	end
+
+	TabBtn.MouseButton1Click:Connect(Select)
+	if not CurrentPage then Select() end
+
+	local Tab = {}
+
+	-- Toggle (compact Orion style)
+	function Tab:AddToggle(text, cb)
+		local B = Instance.new("TextButton", Page)
+		B.Size = UDim2.new(1,-24,0,36)
+		B.Text = text.."  [OFF]"
+		B.Font = Enum.Font.Gotham
+		B.TextSize = 14
+		B.TextXAlignment = Left
+		B.TextColor3 = Color3.new(1,1,1)
+		B.BackgroundTransparency = 0.45
+		Instance.new("UICorner", B)
+
+		local state = false
+		B.MouseButton1Click:Connect(function()
+			state = not state
+			B.Text = text.."  ["..(state and "ON" or "OFF").."]"
+			pcall(cb,state)
+		end)
+	end
+
+	-- Slider (thin Orion bar)
+	function Tab:AddSlider(text,min,max,cb)
+		local H = Instance.new("Frame", Page)
+		H.Size = UDim2.new(1,-24,0,46)
+		H.BackgroundTransparency = 1
+
+		local L = Instance.new("TextLabel", H)
+		L.Size = UDim2.new(1,0,0,18)
+		L.BackgroundTransparency = 1
+		L.Text = text
+		L.Font = Enum.Font.Gotham
+		L.TextSize = 13
+		L.TextColor3 = Color3.new(1,1,1)
+		L.TextXAlignment = Left
+
+		local Bar = Instance.new("Frame", H)
+		Bar.Position = UDim2.fromOffset(0,26)
+		Bar.Size = UDim2.new(1,0,0,6)
+		Bar.BackgroundTransparency = 0.6
+		Instance.new("UICorner", Bar)
+
+		local Fill = Instance.new("Frame", Bar)
+		Fill.Size = UDim2.fromScale(0,1)
+		Fill.BackgroundColor3 = Color3.fromRGB(255,160,200)
+		Instance.new("UICorner", Fill)
+
+		local dragging = false
+		Bar.InputBegan:Connect(function(i)
+			if i.UserInputType == Enum.UserInputType.MouseButton1
+			or i.UserInputType == Enum.UserInputType.Touch then
+				dragging = true
+			end
+		end)
+		UIS.InputEnded:Connect(function()
+			dragging = false
+		end)
+		UIS.InputChanged:Connect(function(i)
+			if dragging then
+				local p = math.clamp((i.Position.X-Bar.AbsolutePosition.X)/Bar.AbsoluteSize.X,0,1)
+				Fill.Size = UDim2.fromScale(p,1)
+				pcall(cb, math.floor(min+(max-min)*p))
+			end
+		end)
+	end
+
+	-- Dropdown (single open)
+	function Tab:AddDropdown(text,opts,cb)
+		local B = Instance.new("TextButton", Page)
+		B.Size = UDim2.new(1,-24,0,36)
+		B.Text = text
+		B.Font = Enum.Font.Gotham
+		B.TextSize = 14
+		B.TextXAlignment = Left
+		B.TextColor3 = Color3.new(1,1,1)
+		B.BackgroundTransparency = 0.45
+		Instance.new("UICorner", B)
+
+		B.MouseButton1Click:Connect(function()
+			if CurrentDropdown then CurrentDropdown:Destroy() end
+			local D = Instance.new("Frame", Page)
+			D.BackgroundTransparency = 1
+			CurrentDropdown = D
+			for _,v in ipairs(opts) do
+				local O = Instance.new("TextButton", D)
+				O.Size = UDim2.new(1,-40,0,30)
+				O.Text = v
+				O.Font = Enum.Font.Gotham
+				O.TextSize = 13
+				O.TextXAlignment = Left
+				O.TextColor3 = Color3.new(1,1,1)
+				O.BackgroundTransparency = 0.45
+				Instance.new("UICorner", O)
+				O.MouseButton1Click:Connect(function()
+					pcall(cb,v)
+					D:Destroy()
+					CurrentDropdown = nil
+				end)
+			end
+		end)
+	end
+
+	return Tab
+end
+
+return Library
