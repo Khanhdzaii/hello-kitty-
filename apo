@@ -1,0 +1,230 @@
+--// KittyUI Library | Orion-like | Hello Kitty Style
+--// Mobile + PC | No animation | Local UI
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- cleanup
+pcall(function()
+	PlayerGui:FindFirstChild("KittyUI"):Destroy()
+end)
+
+-- ================= GUI =================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "KittyUI"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ResetOnSpawn = false
+
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.fromOffset(560, 380)
+Main.Position = UDim2.fromScale(0.5, 0.5)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(255, 190, 210)
+Main.BackgroundTransparency = 0.25
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 22)
+
+-- ================= TITLE =================
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 42)
+Title.Text = "😻 Kitty UI"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundTransparency = 1
+
+-- ================= BODY =================
+local Body = Instance.new("Frame", Main)
+Body.Position = UDim2.fromOffset(0, 42)
+Body.Size = UDim2.new(1, 0, 1, -42)
+Body.BackgroundTransparency = 1
+
+-- Tabs list
+local Tabs = Instance.new("Frame", Body)
+Tabs.Size = UDim2.new(0, 140, 1, 0)
+Tabs.BackgroundTransparency = 1
+
+local TabsLayout = Instance.new("UIListLayout", Tabs)
+TabsLayout.Padding = UDim.new(0, 6)
+
+-- Pages
+local Pages = Instance.new("Frame", Body)
+Pages.Position = UDim2.fromOffset(140, 0)
+Pages.Size = UDim2.new(1, -140, 1, 0)
+Pages.BackgroundTransparency = 1
+
+-- ================= LIB =================
+local Library = {}
+local CurrentPage
+local CurrentTabBtn
+
+function Library:CreateWindow(title)
+	Title.Text = title or "Kitty UI"
+	return Library
+end
+
+function Library:CreateTab(name)
+	-- tab button
+	local TabBtn = Instance.new("TextButton", Tabs)
+	TabBtn.Size = UDim2.new(1, -10, 0, 36)
+	TabBtn.Text = "  😻  "..name
+	TabBtn.Font = Enum.Font.Gotham
+	TabBtn.TextSize = 14
+	TabBtn.TextXAlignment = Left
+	TabBtn.TextColor3 = Color3.new(1,1,1)
+	TabBtn.BackgroundTransparency = 0.5
+	TabBtn.BorderSizePixel = 0
+	TabBtn.Active = true
+	Instance.new("UICorner", TabBtn)
+
+	-- page
+	local Page = Instance.new("Frame", Pages)
+	Page.Size = UDim2.new(1, 0, 1, 0)
+	Page.Visible = false
+	Page.BackgroundTransparency = 1
+
+	local Layout = Instance.new("UIListLayout", Page)
+	Layout.Padding = UDim.new(0, 8)
+
+	local function Select()
+		if CurrentPage then CurrentPage.Visible = false end
+		if CurrentTabBtn then CurrentTabBtn.BackgroundTransparency = 0.5 end
+		Page.Visible = true
+		TabBtn.BackgroundTransparency = 0.2
+		CurrentPage = Page
+		CurrentTabBtn = TabBtn
+	end
+
+	TabBtn.MouseButton1Click:Connect(Select)
+	if not CurrentPage then Select() end
+
+	local Tab = {}
+
+	function Tab:AddToggle(text, cb)
+		local B = Instance.new("TextButton", Page)
+		B.Size = UDim2.new(1, -20, 0, 36)
+		B.Text = text.." [OFF]"
+		B.Font = Enum.Font.Gotham
+		B.TextSize = 14
+		B.TextXAlignment = Left
+		B.TextColor3 = Color3.new(1,1,1)
+		B.BackgroundTransparency = 0.4
+		B.BorderSizePixel = 0
+		B.Active = true
+		Instance.new("UICorner", B)
+
+		local state = false
+		B.MouseButton1Click:Connect(function()
+			state = not state
+			B.Text = text.." ["..(state and "ON" or "OFF").."]"
+			if cb then cb(state) end
+		end)
+	end
+
+	function Tab:AddButton(text, cb)
+		local B = Instance.new("TextButton", Page)
+		B.Size = UDim2.new(1, -20, 0, 36)
+		B.Text = text
+		B.Font = Enum.Font.Gotham
+		B.TextSize = 14
+		B.TextXAlignment = Left
+		B.TextColor3 = Color3.new(1,1,1)
+		B.BackgroundTransparency = 0.4
+		B.BorderSizePixel = 0
+		B.Active = true
+		Instance.new("UICorner", B)
+
+		B.MouseButton1Click:Connect(function()
+			if cb then cb() end
+		end)
+	end
+
+	function Tab:AddSlider(text, min, max, cb)
+		local H = Instance.new("Frame", Page)
+		H.Size = UDim2.new(1, -20, 0, 46)
+		H.BackgroundTransparency = 1
+
+		local L = Instance.new("TextLabel", H)
+		L.Size = UDim2.new(1, 0, 0, 18)
+		L.Text = text
+		L.Font = Enum.Font.Gotham
+		L.TextSize = 13
+		L.TextColor3 = Color3.new(1,1,1)
+		L.BackgroundTransparency = 1
+		L.TextXAlignment = Left
+
+		local Bar = Instance.new("Frame", H)
+		Bar.Position = UDim2.fromOffset(0, 26)
+		Bar.Size = UDim2.new(1, 0, 0, 6)
+		Bar.BackgroundTransparency = 0.5
+		Bar.Active = true
+		Instance.new("UICorner", Bar)
+
+		local Fill = Instance.new("Frame", Bar)
+		Fill.Size = UDim2.fromScale(0, 1)
+		Fill.BackgroundColor3 = Color3.fromRGB(255,120,180)
+		Instance.new("UICorner", Fill)
+
+		local dragging = false
+		Bar.InputBegan:Connect(function(i)
+			if i.UserInputType == Enum.UserInputType.MouseButton1
+			or i.UserInputType == Enum.UserInputType.Touch then
+				dragging = true
+			end
+		end)
+		UIS.InputEnded:Connect(function()
+			dragging = false
+		end)
+		UIS.InputChanged:Connect(function(i)
+			if dragging then
+				local p = math.clamp((i.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+				Fill.Size = UDim2.fromScale(p, 1)
+				if cb then cb(math.floor(min + (max - min) * p)) end
+			end
+		end)
+	end
+
+	function Tab:AddDropdown(text, list, cb)
+		local B = Instance.new("TextButton", Page)
+		B.Size = UDim2.new(1, -20, 0, 36)
+		B.Text = text
+		B.Font = Enum.Font.Gotham
+		B.TextSize = 14
+		B.TextXAlignment = Left
+		B.TextColor3 = Color3.new(1,1,1)
+		B.BackgroundTransparency = 0.4
+		B.BorderSizePixel = 0
+		B.Active = true
+		Instance.new("UICorner", B)
+
+		B.MouseButton1Click:Connect(function()
+			for _,v in ipairs(list) do
+				local O = Instance.new("TextButton", Page)
+				O.Size = UDim2.new(1, -40, 0, 30)
+				O.Text = v
+				O.Font = Enum.Font.Gotham
+				O.TextSize = 13
+				O.TextXAlignment = Left
+				O.TextColor3 = Color3.new(1,1,1)
+				O.BackgroundTransparency = 0.45
+				O.BorderSizePixel = 0
+				O.Active = true
+				Instance.new("UICorner", O)
+
+				O.MouseButton1Click:Connect(function()
+					if cb then cb(v) end
+					O:Destroy()
+				end)
+			end
+		end)
+	end
+
+	return Tab
+end
+
+return Library
