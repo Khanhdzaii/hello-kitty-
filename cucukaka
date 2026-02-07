@@ -1,239 +1,244 @@
---// KittyUI Local Library
---// Hello Kitty Style | Mobile Friendly | No Animation
+--// KittyUI Basic Library
+--// Loadstring | Multi Tab | Toggle | Slider | Dropdown | Button
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
-local KittyUI = {}
+pcall(function()
+    PlayerGui:FindFirstChild("KittyUI"):Destroy()
+end)
 
---================ WINDOW =================
-function KittyUI:CreateWindow(title)
-	pcall(function()
-		PlayerGui:FindFirstChild("KittyUI"):Destroy()
-	end)
+-- GUI
+local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+ScreenGui.Name = "KittyUI"
+ScreenGui.ResetOnSpawn = false
 
-	local ScreenGui = Instance.new("ScreenGui", PlayerGui)
-	ScreenGui.Name = "KittyUI"
-	ScreenGui.ResetOnSpawn = false
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.fromOffset(500, 360)
+Main.Position = UDim2.fromScale(0.5, 0.5)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(255, 190, 210)
+Main.BorderSizePixel = 0
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 18)
 
-	local Main = Instance.new("Frame", ScreenGui)
-	Main.Size = UDim2.fromOffset(520, 360)
-	Main.Position = UDim2.fromScale(0.5, 0.5)
-	Main.AnchorPoint = Vector2.new(0.5, 0.5)
-	Main.BackgroundTransparency = 0.25
-	Main.BorderSizePixel = 0
-	Main.ClipsDescendants = true
-	Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 22)
+-- Title
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1,0,0,40)
+Title.BackgroundTransparency = 1
+Title.Text = "😻 Kitty UI"
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+Title.TextColor3 = Color3.new(1,1,1)
 
-	-- đổi màu hồng trắng liên tục
-	task.spawn(function()
-		local t = 0
-		while Main.Parent do
-			t += RunService.RenderStepped:Wait()
-			local a = (math.sin(t * 2) + 1) / 2
-			Main.BackgroundColor3 = Color3.new(1, 0.82 + 0.18 * a, 0.9)
-		end
-	end)
+-- Body
+local Body = Instance.new("Frame", Main)
+Body.Position = UDim2.fromOffset(0,40)
+Body.Size = UDim2.new(1,0,1,-40)
+Body.BackgroundTransparency = 1
 
-	-- Title
-	local Top = Instance.new("Frame", Main)
-	Top.Size = UDim2.new(1,0,0,40)
-	Top.BackgroundTransparency = 1
+-- Tabs
+local Tabs = Instance.new("Frame", Body)
+Tabs.Size = UDim2.new(0,120,1,0)
+Tabs.BackgroundTransparency = 1
 
-	local Title = Instance.new("TextLabel", Top)
-	Title.Size = UDim2.new(1,-10,1,0)
-	Title.Position = UDim2.fromOffset(10,0)
-	Title.BackgroundTransparency = 1
-	Title.Text = "😻 "..(title or "Kitty UI")
-	Title.Font = Enum.Font.GothamBold
-	Title.TextSize = 16
-	Title.TextXAlignment = Left
-	Title.TextColor3 = Color3.new(1,1,1)
+local TabLayout = Instance.new("UIListLayout", Tabs)
+TabLayout.Padding = UDim.new(0,6)
 
-	-- Body
-	local Body = Instance.new("Frame", Main)
-	Body.Position = UDim2.fromOffset(0,40)
-	Body.Size = UDim2.new(1,0,1,-40)
-	Body.BackgroundTransparency = 1
+-- Pages
+local Pages = Instance.new("Frame", Body)
+Pages.Position = UDim2.fromOffset(120,0)
+Pages.Size = UDim2.new(1,-120,1,0)
+Pages.BackgroundTransparency = 1
 
-	local Tabs = Instance.new("Frame", Body)
-	Tabs.Size = UDim2.new(0,120,1,0)
-	Tabs.BackgroundTransparency = 1
-
-	local TabLayout = Instance.new("UIListLayout", Tabs)
-	TabLayout.Padding = UDim.new(0,6)
-
-	local Pages = Instance.new("Frame", Body)
-	Pages.Position = UDim2.fromOffset(120,0)
-	Pages.Size = UDim2.new(1,-120,1,0)
-	Pages.BackgroundTransparency = 1
-
-	-- Drag (PC + Mobile)
-	do
-		local dragging, dragStart, startPos
-		Top.InputBegan:Connect(function(i)
-			if i.UserInputType == Enum.UserInputType.MouseButton1
-			or i.UserInputType == Enum.UserInputType.Touch then
-				dragging = true
-				dragStart = i.Position
-				startPos = Main.Position
-			end
-		end)
-		UIS.InputChanged:Connect(function(i)
-			if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement
-			or i.UserInputType == Enum.UserInputType.Touch) then
-				local d = i.Position - dragStart
-				Main.Position = UDim2.new(
-					startPos.X.Scale, startPos.X.Offset + d.X,
-					startPos.Y.Scale, startPos.Y.Offset + d.Y
-				)
-			end
-		end)
-		UIS.InputEnded:Connect(function()
-			dragging = false
-		end)
-	end
-
-	local Window = {}
-	local CurrentPage
-
-	--================ TAB =================
-	function Window:CreateTab(name)
-		local TabBtn = Instance.new("TextButton", Tabs)
-		TabBtn.Size = UDim2.new(1,-10,0,34)
-		TabBtn.Text = "  😻 "..name
-		TabBtn.Font = Enum.Font.Gotham
-		TabBtn.TextSize = 14
-		TabBtn.TextXAlignment = Left
-		TabBtn.TextColor3 = Color3.new(1,1,1)
-		TabBtn.BackgroundTransparency = 0.4
-		Instance.new("UICorner", TabBtn)
-
-		local Page = Instance.new("Frame", Pages)
-		Page.Size = UDim2.new(1,0,1,0)
-		Page.Visible = false
-		Page.BackgroundTransparency = 1
-
-		local Layout = Instance.new("UIListLayout", Page)
-		Layout.Padding = UDim.new(0,8)
-
-		TabBtn.MouseButton1Click:Connect(function()
-			if CurrentPage then CurrentPage.Visible = false end
-			Page.Visible = true
-			CurrentPage = Page
-		end)
-
-		if not CurrentPage then
-			Page.Visible = true
-			CurrentPage = Page
-		end
-
-		local Tab = {}
-
-		-- Toggle
-		function Tab:AddToggle(text, cb)
-			local B = Instance.new("TextButton", Page)
-			B.Size = UDim2.new(1,-20,0,34)
-			B.Text = text.." : OFF"
-			B.Font = Enum.Font.Gotham
-			B.TextSize = 14
-			B.TextXAlignment = Left
-			B.TextColor3 = Color3.new(1,1,1)
-			B.BackgroundTransparency = 0.45
-			Instance.new("UICorner", B)
-
-			local state = false
-			B.MouseButton1Click:Connect(function()
-				state = not state
-				B.Text = text.." : "..(state and "ON" or "OFF")
-				if cb then cb(state) end
-			end)
-		end
-
-		-- Slider
-		function Tab:AddSlider(text, min, max, cb)
-			local H = Instance.new("Frame", Page)
-			H.Size = UDim2.new(1,-20,0,44)
-			H.BackgroundTransparency = 1
-
-			local L = Instance.new("TextLabel", H)
-			L.Size = UDim2.new(1,0,0,18)
-			L.BackgroundTransparency = 1
-			L.Text = text
-			L.Font = Enum.Font.Gotham
-			L.TextSize = 13
-			L.TextXAlignment = Left
-			L.TextColor3 = Color3.new(1,1,1)
-
-			local Bar = Instance.new("Frame", H)
-			Bar.Position = UDim2.fromOffset(0,24)
-			Bar.Size = UDim2.new(1,0,0,6)
-			Bar.BackgroundTransparency = 0.6
-			Instance.new("UICorner", Bar)
-
-			local Fill = Instance.new("Frame", Bar)
-			Fill.Size = UDim2.fromScale(0,1)
-			Fill.BackgroundColor3 = Color3.fromRGB(255,150,200)
-			Instance.new("UICorner", Fill)
-
-			local dragging = false
-			Bar.InputBegan:Connect(function(i)
-				if i.UserInputType == Enum.UserInputType.MouseButton1
-				or i.UserInputType == Enum.UserInputType.Touch then
-					dragging = true
-				end
-			end)
-			UIS.InputEnded:Connect(function()
-				dragging = false
-			end)
-			UIS.InputChanged:Connect(function(i)
-				if dragging then
-					local p = math.clamp((i.Position.X-Bar.AbsolutePosition.X)/Bar.AbsoluteSize.X,0,1)
-					Fill.Size = UDim2.fromScale(p,1)
-					if cb then cb(math.floor(min+(max-min)*p)) end
-				end
-			end)
-		end
-
-		-- Dropdown
-		function Tab:AddDropdown(text, opts, cb)
-			local B = Instance.new("TextButton", Page)
-			B.Size = UDim2.new(1,-20,0,34)
-			B.Text = text
-			B.Font = Enum.Font.Gotham
-			B.TextSize = 14
-			B.TextXAlignment = Left
-			B.TextColor3 = Color3.new(1,1,1)
-			B.BackgroundTransparency = 0.45
-			Instance.new("UICorner", B)
-
-			B.MouseButton1Click:Connect(function()
-				for _,v in ipairs(opts) do
-					local O = Instance.new("TextButton", Page)
-					O.Size = UDim2.new(1,-40,0,28)
-					O.Text = v
-					O.Font = Enum.Font.Gotham
-					O.TextSize = 13
-					O.TextXAlignment = Left
-					O.TextColor3 = Color3.new(1,1,1)
-					O.BackgroundTransparency = 0.45
-					Instance.new("UICorner", O)
-					O.MouseButton1Click:Connect(function()
-						if cb then cb(v) end
-						O:Destroy()
-					end)
-				end
-			end)
-		end
-
-		return Tab
-	end
-
-	return Window
+-- Drag
+do
+    local dragging, startPos, dragStart
+    Title.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1
+        or i.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = i.Position
+            startPos = Main.Position
+        end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if dragging then
+            local d = i.Position - dragStart
+            Main.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + d.X,
+                startPos.Y.Scale, startPos.Y.Offset + d.Y
+            )
+        end
+    end)
+    UIS.InputEnded:Connect(function()
+        dragging = false
+    end)
 end
 
-return KittyUI
+-- ================= LIB =================
+local Library = {}
+local CurrentPage
+
+function Library:CreateWindow(name)
+    Title.Text = name or "Kitty UI"
+    return Library
+end
+
+function Library:CreateTab(name)
+    -- Tab button
+    local TabBtn = Instance.new("TextButton", Tabs)
+    TabBtn.Size = UDim2.new(1,-10,0,34)
+    TabBtn.Text = "  "..name
+    TabBtn.Font = Enum.Font.Gotham
+    TabBtn.TextSize = 14
+    TabBtn.TextXAlignment = Left
+    TabBtn.TextColor3 = Color3.new(1,1,1)
+    TabBtn.BackgroundTransparency = 0.4
+    TabBtn.BorderSizePixel = 0
+    Instance.new("UICorner", TabBtn)
+
+    -- Page
+    local Page = Instance.new("Frame", Pages)
+    Page.Size = UDim2.new(1,0,1,0)
+    Page.Visible = false
+    Page.BackgroundTransparency = 1
+
+    local Layout = Instance.new("UIListLayout", Page)
+    Layout.Padding = UDim.new(0,8)
+
+    TabBtn.MouseButton1Click:Connect(function()
+        if CurrentPage then CurrentPage.Visible = false end
+        Page.Visible = true
+        CurrentPage = Page
+    end)
+
+    if not CurrentPage then
+        Page.Visible = true
+        CurrentPage = Page
+    end
+
+    local Tab = {}
+
+    -- Toggle
+    function Tab:AddToggle(text, cb)
+        local B = Instance.new("TextButton", Page)
+        B.Size = UDim2.new(1,-20,0,34)
+        B.Text = text.." : OFF"
+        B.Font = Enum.Font.Gotham
+        B.TextSize = 14
+        B.TextXAlignment = Left
+        B.TextColor3 = Color3.new(1,1,1)
+        B.BackgroundTransparency = 0.45
+        Instance.new("UICorner", B)
+
+        local state = false
+        B.MouseButton1Click:Connect(function()
+            state = not state
+            B.Text = text.." : "..(state and "ON" or "OFF")
+            if cb then cb(state) end
+        end)
+    end
+
+    -- Slider
+    function Tab:AddSlider(text,min,max,cb)
+        local H = Instance.new("Frame", Page)
+        H.Size = UDim2.new(1,-20,0,44)
+        H.BackgroundTransparency = 1
+
+        local L = Instance.new("TextLabel", H)
+        L.Size = UDim2.new(1,0,0,18)
+        L.BackgroundTransparency = 1
+        L.Text = text
+        L.Font = Enum.Font.Gotham
+        L.TextSize = 13
+        L.TextColor3 = Color3.new(1,1,1)
+        L.TextXAlignment = Left
+
+        local Bar = Instance.new("Frame", H)
+        Bar.Position = UDim2.fromOffset(0,24)
+        Bar.Size = UDim2.new(1,0,0,6)
+        Bar.BackgroundTransparency = 0.5
+        Instance.new("UICorner", Bar)
+
+        local Fill = Instance.new("Frame", Bar)
+        Fill.Size = UDim2.fromScale(0,1)
+        Fill.BackgroundColor3 = Color3.fromRGB(255,140,180)
+        Instance.new("UICorner", Fill)
+
+        local dragging = false
+        Bar.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1
+            or i.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+            end
+        end)
+        UIS.InputEnded:Connect(function()
+            dragging = false
+        end)
+        UIS.InputChanged:Connect(function(i)
+            if dragging then
+                local p = math.clamp((i.Position.X-Bar.AbsolutePosition.X)/Bar.AbsoluteSize.X,0,1)
+                Fill.Size = UDim2.fromScale(p,1)
+                if cb then
+                    cb(math.floor(min+(max-min)*p))
+                end
+            end
+        end)
+    end
+
+    -- Dropdown
+    function Tab:AddDropdown(text,opts,cb)
+        local B = Instance.new("TextButton", Page)
+        B.Size = UDim2.new(1,-20,0,34)
+        B.Text = text
+        B.Font = Enum.Font.Gotham
+        B.TextSize = 14
+        B.TextXAlignment = Left
+        B.TextColor3 = Color3.new(1,1,1)
+        B.BackgroundTransparency = 0.45
+        Instance.new("UICorner", B)
+
+        B.MouseButton1Click:Connect(function()
+            for _,v in ipairs(opts) do
+                local O = Instance.new("TextButton", Page)
+                O.Size = UDim2.new(1,-40,0,28)
+                O.Text = v
+                O.Font = Enum.Font.Gotham
+                O.TextSize = 13
+                O.TextXAlignment = Left
+                O.TextColor3 = Color3.new(1,1,1)
+                O.BackgroundTransparency = 0.5
+                Instance.new("UICorner", O)
+                O.MouseButton1Click:Connect(function()
+                    if cb then cb(v) end
+                    O.Parent:ClearAllChildren()
+                end)
+            end
+        end)
+    end
+
+    -- ✅ BUTTON (SILENT)
+    function Tab:AddButton(text, cb)
+        local B = Instance.new("TextButton", Page)
+        B.Size = UDim2.new(1,-20,0,34)
+        B.Text = text
+        B.Font = Enum.Font.Gotham
+        B.TextSize = 14
+        B.TextXAlignment = Left
+        B.TextColor3 = Color3.new(1,1,1)
+        B.BackgroundTransparency = 0.45
+        B.BorderSizePixel = 0
+        Instance.new("UICorner", B)
+
+        B.MouseButton1Click:Connect(function()
+            if cb then cb() end
+        end)
+    end
+
+    return Tab
+end
+
+return Library
