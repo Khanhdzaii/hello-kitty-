@@ -1,0 +1,205 @@
+--// Hello Kitty Glass UI (Toggle + Slider + Dropdown)
+--// by ChatGPT 😼🎀
+
+local KittyUI = {}
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+
+local LP = Players.LocalPlayer
+
+-- BLUR
+local Blur = Instance.new("BlurEffect")
+Blur.Size = 0
+Blur.Parent = Lighting
+TweenService:Create(Blur, TweenInfo.new(0.5), {Size = 18}):Play()
+
+-- GUI
+local Gui = Instance.new("ScreenGui", LP.PlayerGui)
+Gui.Name = "HelloKittyGlassUI"
+Gui.ResetOnSpawn = false
+
+-- MAIN
+local Main = Instance.new("Frame", Gui)
+Main.Size = UDim2.fromScale(0.45, 0.55)
+Main.Position = UDim2.fromScale(0.5, 0.5)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(255,182,193)
+Main.BackgroundTransparency = 0.25
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,30)
+
+-- TITLE
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1,0,0.12,0)
+Title.BackgroundTransparency = 1
+Title.Text = "🎀 Hello Kitty Glass UI"
+Title.Font = Enum.Font.GothamRounded
+Title.TextScaled = true
+Title.TextColor3 = Color3.fromRGB(255,255,255)
+
+-- TABS / PAGES
+local Tabs = Instance.new("Frame", Main)
+Tabs.Size = UDim2.new(0.25,0,0.88,0)
+Tabs.Position = UDim2.new(0,0,0.12,0)
+Tabs.BackgroundTransparency = 1
+Instance.new("UIListLayout", Tabs).Padding = UDim.new(0,10)
+
+local Pages = Instance.new("Frame", Main)
+Pages.Size = UDim2.new(0.75,0,0.88,0)
+Pages.Position = UDim2.new(0.25,0,0.12,0)
+Pages.BackgroundTransparency = 1
+
+-- WINDOW
+function KittyUI:CreateWindow()
+	local Window = {}
+
+	function Window:CreateTab(name)
+		local TabBtn = Instance.new("TextButton", Tabs)
+		TabBtn.Size = UDim2.new(1,0,0,40)
+		TabBtn.Text = name
+		TabBtn.Font = Enum.Font.GothamRounded
+		TabBtn.TextScaled = true
+		TabBtn.TextColor3 = Color3.fromRGB(255,255,255)
+		TabBtn.BackgroundColor3 = Color3.fromRGB(255,192,203)
+		TabBtn.BackgroundTransparency = 0.3
+		TabBtn.BorderSizePixel = 0
+		Instance.new("UICorner",TabBtn).CornerRadius = UDim.new(0,20)
+
+		local Page = Instance.new("ScrollingFrame", Pages)
+		Page.Size = UDim2.fromScale(1,1)
+		Page.CanvasSize = UDim2.new(0,0,0,0)
+		Page.ScrollBarImageTransparency = 1
+		Page.Visible = false
+		Page.BackgroundTransparency = 1
+		Instance.new("UIListLayout", Page).Padding = UDim.new(0,12)
+
+		TabBtn.MouseButton1Click:Connect(function()
+			for _,v in pairs(Pages:GetChildren()) do
+				if v:IsA("ScrollingFrame") then v.Visible = false end
+			end
+			Page.Visible = true
+		end)
+
+		local Tab = {}
+
+		-- 🔲 TOGGLE SQUARE
+		function Tab:AddToggle(text, default, callback)
+			local Frame = Instance.new("Frame", Page)
+			Frame.Size = UDim2.new(1,-20,0,45)
+			Frame.BackgroundColor3 = Color3.fromRGB(255,255,255)
+			Frame.BackgroundTransparency = 0.35
+			Frame.BorderSizePixel = 0
+			Instance.new("UICorner",Frame).CornerRadius = UDim.new(0,20)
+
+			local Label = Instance.new("TextLabel", Frame)
+			Label.Size = UDim2.new(0.75,0,1,0)
+			Label.Text = text
+			Label.Font = Enum.Font.GothamRounded
+			Label.TextScaled = true
+			Label.TextColor3 = Color3.fromRGB(255,105,180)
+			Label.BackgroundTransparency = 1
+
+			local Box = Instance.new("TextButton", Frame)
+			Box.Size = UDim2.new(0,30,0,30)
+			Box.Position = UDim2.new(0.82,0,0.17,0)
+			Box.BackgroundColor3 = Color3.fromRGB(255,255,255)
+			Box.Text = ""
+			Box.BorderSizePixel = 0
+			Instance.new("UICorner",Box).CornerRadius = UDim.new(0,6)
+
+			local on = default or false
+			local flashing = false
+
+			local function flash()
+				flashing = true
+				task.spawn(function()
+					while flashing do
+						Box.BackgroundColor3 = Color3.fromRGB(255,182,193)
+						task.wait(0.3)
+						if not flashing then break end
+						Box.BackgroundColor3 = Color3.fromRGB(255,255,255)
+						task.wait(0.3)
+					end
+				end)
+			end
+
+			if on then flash() end
+			pcall(callback,on)
+
+			Box.MouseButton1Click:Connect(function()
+				on = not on
+				flashing = false
+				if on then flash() else Box.BackgroundColor3 = Color3.fromRGB(255,255,255) end
+				pcall(callback,on)
+			end)
+		end
+
+		-- 🎚 SLIDER
+		function Tab:AddSlider(text,min,max,default,callback)
+			local Holder = Instance.new("Frame", Page)
+			Holder.Size = UDim2.new(1,-20,0,55)
+			Holder.BackgroundTransparency = 1
+
+			local Label = Instance.new("TextLabel", Holder)
+			Label.Size = UDim2.new(1,0,0.4,0)
+			Label.Text = text..": "..default
+			Label.Font = Enum.Font.GothamRounded
+			Label.TextScaled = true
+			Label.TextColor3 = Color3.fromRGB(255,105,180)
+			Label.BackgroundTransparency = 1
+
+			local Bar = Instance.new("Frame", Holder)
+			Bar.Position = UDim2.new(0,0,0.6,0)
+			Bar.Size = UDim2.new(1,0,0.25,0)
+			Bar.BackgroundColor3 = Color3.fromRGB(255,255,255)
+			Bar.BackgroundTransparency = 0.4
+			Instance.new("UICorner",Bar).CornerRadius = UDim.new(1,0)
+
+			local Fill = Instance.new("Frame", Bar)
+			Fill.Size = UDim2.new((default-min)/(max-min),0,1,0)
+			Fill.BackgroundColor3 = Color3.fromRGB(255,182,193)
+			Instance.new("UICorner",Fill).CornerRadius = UDim.new(1,0)
+
+			Bar.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					local percent = math.clamp((input.Position.X-Bar.AbsolutePosition.X)/Bar.AbsoluteSize.X,0,1)
+					local value = math.floor(min + (max-min)*percent)
+					Fill.Size = UDim2.new(percent,0,1,0)
+					Label.Text = text..": "..value
+					pcall(callback,value)
+				end
+			end)
+		end
+
+		-- 📋 DROPDOWN
+		function Tab:AddDropdown(text,list,callback)
+			local Btn = Instance.new("TextButton", Page)
+			Btn.Size = UDim2.new(1,-20,0,45)
+			Btn.Text = text
+			Btn.Font = Enum.Font.GothamRounded
+			Btn.TextScaled = true
+			Btn.TextColor3 = Color3.fromRGB(255,105,180)
+			Btn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+			Btn.BackgroundTransparency = 0.35
+			Btn.BorderSizePixel = 0
+			Instance.new("UICorner",Btn).CornerRadius = UDim.new(0,20)
+
+			Btn.MouseButton1Click:Connect(function()
+				for _,v in pairs(list) do
+					pcall(callback,v)
+					break
+				end
+			end)
+		end
+
+		return Tab
+	end
+
+	return Window
+end
+
+return KittyUI
